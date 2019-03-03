@@ -1,11 +1,11 @@
 (require 'package)
 
-(let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
-                    (not (gnutls-available-p))))
-       (proto (if no-ssl "http" "https")))
-  (add-to-list 'package-archives (cons "melpa-stable" (concat proto "://stable.melpa.org/packages/")) t)
-  (when (< emacs-major-version 24)
-    (add-to-list 'package-archives '("gnu" . (concat proto "://elpa.gnu.org/packages/")))))
+(add-to-list 'package-archives
+	     '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+
+(package-initialize)
+(when (not package-archive-contents)
+  (package-refresh-contents))
 
 (defun require-package (package &optional min-version no-refresh)
   (if (package-installed-p package min-version)
@@ -35,6 +35,7 @@
 (add-hook 'js2-mode-hook (lambda ()
   (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t)))
 
+(require-package `web-mode)
 (require-package `magit)
 (require-package 'company)
 (require-package 'company-tern)
@@ -42,15 +43,53 @@
 (require-package 'monokai-theme)
 (require-package 'auto-complete)
 (require-package 'color-theme-sanityinc-tomorrow)
+(require-package 'neotree)
+(require-package 'material-theme)
+
+(global-set-key [f8] 'neotree-toggle)
+
+;; n next line, p previous lineã€‚
+;; SPC or RET or TAB Open current item if it is a file. Fold/Unfold current item if it is a directory.
+;; U Go up a directory
+;; g Refresh
+;; A Maximize/Minimize the NeoTree Window
+;; H Toggle display hidden files
+;; O Recursively open a directory
+;; C-c C-n Create a file or create a directory if filename ends with a â€˜/â€™
+;; C-c C-d Delete a file or a directory.
+;; C-c C-r Rename a file or a directory.
+;; C-c C-c Change the root directory.
+;; C-c C-p Copy a file or a directory.
+
 
 (setq file-name-coding-system 'utf-8)
-(color-theme-sanityinc-tomorrow-day)
+;(color-theme-sanityinc-tomorrow-day)
 ;(color-theme-sanityinc-tomorrow-eighties)
 ;(load-theme 'monokai t)
+(load-theme 'material-light t)
 
 ;; magit settings
 
 (global-set-key (kbd "C-x g") 'magit-status)
+
+;; =============
+(require-package 'ivy)
+(require-package 'swiper)
+(require-package 'counsel)
+
+;; FIND & REPLACE
+;; ivy - autocomplete
+;; swiper - search (i-search)
+;; counsel - Ñ€ÐµÐ¼Ð°Ð¿Ð¸Ñ‚ ÑÑ‚Ð°Ð½Ð´Ð°Ñ€Ñ‚Ð½Ñ‹Ðµ Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¸ Ð½Ð° Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ð½Ð¸Ðµ ivy
+;; see ido, helm
+(ivy-mode 1)
+(counsel-mode 1)
+(setq ivy-use-virtual-buffers t)
+(setq ivy-count-format "(%d/%d) ")
+(global-set-key (kbd "C-s") 'swiper)
+(global-set-key (kbd "M-x") 'counsel-M-x)
+(global-set-key (kbd "C-x C-f") 'counsel-find-file)
+
 
 ;; php settings
 (require `php-mode)
@@ -65,27 +104,50 @@
     (define-key php-mode-map (kbd "C-]") 'ac-php-find-symbol-at-point)
     (define-key php-mode-map (kbd "C-t") 'ac-php-location-stack-back)))
 
-;; ÷ÙÄÅÌÑÅÔ ÓËÏÂËÉ
+
+;; python settings
+
+(require-package 'better-defaults)
+(require-package 'elpy)
+(require-package 'flycheck)
+(require-package 'py-autopep8)
+(elpy-enable)
+
+(when (require 'flycheck nil t)
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  (add-hook 'elpy-mode-hook 'flycheck-mode))
+
+(require 'py-autopep8)
+(add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save)
+
+;; Ð’Ñ‹Ð´ÐµÐ»ÑÐµÑ‚ ÑÐºÐ¾Ð±ÐºÐ¸
 (show-paren-mode t)
-;; ÷ÙÄÅÌÑÔØ ×ÙÒÁÖÅÎÉÅ × ÓËÏÂËÁÈ
+;; Ð’Ñ‹Ð´ÐµÐ»ÑÑ‚ÑŒ Ð²Ñ‹Ñ€Ð°Ð¶ÐµÐ½Ð¸Ðµ Ð² ÑÐºÐ¾Ð±ÐºÐ°Ñ…
 ;; (setq show-paren-style 'expression
+;; Alarm bell
+(setq visible-bell 1)
+
+;; TAGS
+(require-package 'ggtags)
+(require-package 'gxref)
+
+(add-to-list 'xref-backend-functions 'gxref-xref-backend)
+
 
 (require 'linum)
-(line-number-mode t) ;; ÐÏËÁÚÁÔØ ÎÏÍÅÒ ÓÔÒÏËÉ × mode-line
-(global-linum-mode t) ;; ÐÏËÁÚÙ×ÁÔØ ÎÏÍÅÒÁ ÓÔÒÏË ×Ï ×ÓÅÈ ÂÕÆÅÒÁÈ
-(column-number-mode t) ;; ÐÏËÁÚÁÔØ ÎÏÍÅÒ ÓÔÏÌÂÃÁ × mode-line
-(setq linum-format " %d") ;; ÚÁÄÁÅÍ ÆÏÒÍÁÔ ÎÕÍÅÒÁÃÉÉ ÓÔÒÏË)
+(line-number-mode t) ;; Ð¿Ð¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ Ð½Ð¾Ð¼ÐµÑ€ ÑÑ‚Ñ€Ð¾ÐºÐ¸ Ð² mode-line
+(global-linum-mode t) ;; Ð¿Ð¾ÐºÐ°Ð·Ñ‹Ð²Ð°Ñ‚ÑŒ Ð½Ð¾Ð¼ÐµÑ€Ð° ÑÑ‚Ñ€Ð¾Ðº Ð²Ð¾ Ð²ÑÐµÑ… Ð±ÑƒÑ„ÐµÑ€Ð°Ñ…
+(column-number-mode t) ;; Ð¿Ð¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ Ð½Ð¾Ð¼ÐµÑ€ ÑÑ‚Ð¾Ð»Ð±Ñ†Ð° Ð² mode-line
+(setq linum-format " %d") ;; Ð·Ð°Ð´Ð°ÐµÐ¼ Ñ„Ð¾Ñ€Ð¼Ð°Ñ‚ Ð½ÑƒÐ¼ÐµÑ€Ð°Ñ†Ð¸Ð¸ ÑÑ‚Ñ€Ð¾Ðº)
 
 ;; Buffer Selection and ibuffer settings
 (require 'bs)
 (require 'ibuffer)
 (defalias 'list-buffers 'ibuffer)
 
-;; ïÂÝÉÊ Ó ÓÉÓÔÅÍÏÊ ÂÕÆÅÒ ÏÂÍÅÎÁ
+;; ÐžÐ±Ñ‰Ð¸Ð¹ Ñ ÑÐ¸ÑÑ‚ÐµÐ¼Ð¾Ð¹ Ð±ÑƒÑ„ÐµÑ€ Ð¾Ð±Ð¼ÐµÐ½Ð°
 ;; Clipboard settings
 (setq x-select-enable-clipboard t)
-
-;; ðÒÉ ÓÏÈÒÁÎÅÎÉÅ: ÚÁÍÅÎÉÔØ ÔÁÂÙ ÐÒÏÂÅÌÁÍÉ, ÕÂÒÁÔØ ÌÉÛÎÉÅ ÐÒÏÂÅÌÙ × ËÏÎÃÅ ÓÔÒÏËÉ, ×ÙÒÏ×ÎÑÔØ ÏÔÓÔÕÐÙ
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -94,27 +156,33 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (magit xref-js2 projectile php-eldoc monokai-theme mmm-mode js2-refactor geben dirtree company-tern color-theme-solarized color-theme-sanityinc-tomorrow ag ac-php))))
+    (py-autopep8 flycheck better-defaults pyvenv elpy magit xref-js2 projectile php-eldoc monokai-theme mmm-mode js2-refactor geben dirtree company-tern color-theme-solarized color-theme-sanityinc-tomorrow ag ac-php))))
 
-(require `dired)
-(defun custom-dired-sort ()
-  ""
-  (interactive)
-  (dired-sort-other "-Al --si --time-style long-iso --group-directories-first"))
-
-(define-key dired-mode-map (kbd "s") 'custom-dired-sort)
-
-(defun dired-dotfiles-toggle ()
-    "Show/hide dot-files"
-    (interactive)
-    (when (equal major-mode 'dired-mode)
-      (if (or (not (boundp 'dired-dotfiles-show-p)) dired-dotfiles-show-p) ; if currently showing
-	  (progn 
-	    (set (make-local-variable 'dired-dotfiles-show-p) nil)
-	    (message "h")
-	    (dired-mark-files-regexp "^\\\.")
-	    (dired-do-kill-lines))
-	(progn (revert-buffer) ; otherwise just revert to re-show
-	       (set (make-local-variable 'dired-dotfiles-show-p) t)))))
-
-(define-key dired-mode-map (kbd ")") 'dired-dotfiles-toggle)
+;(require `dired)
+;(defun custom-dired-sort ()
+;  ""
+;  (interactive)
+;  (dired-sort-other "-Al --si --time-style long-iso --group-directories-first"))
+;
+;(define-key dired-mode-map (kbd "s") 'custom-dired-sort)
+;
+;(defun dired-dotfiles-toggle ()
+;    "Show/hide dot-files"
+;    (interactive)
+;    (when (equal major-mode 'dired-mode)
+;      (if (or (not (boundp 'dired-dotfiles-show-p)) dired-dotfiles-show-p) ; if currently showing
+;	  (progn 
+;	    (set (make-local-variable 'dired-dotfiles-show-p) nil)
+;	    (message "h")
+;	    (dired-mark-files-regexp "^\\\.")
+;	    (dired-do-kill-lines))
+;	(progn (revert-buffer) ; otherwise just revert to re-show
+;	       (set (make-local-variable 'dired-dotfiles-show-p) t)))))
+;
+;(define-key dired-mode-map (kbd ")") 'dired-dotfiles-toggle)
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
